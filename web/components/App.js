@@ -6,9 +6,18 @@ import '../css/styles.css'
 import TodoForm from './TodoForm'
 import TodoList from './TodoList'
 
-import useTodoState from './useTodoState'
+function useTodoState(init) {
+  const [todos, setTodos] = useState(init)
 
-const App = () => {
+
+  return {
+    todos,
+    addTodo: x => setTodos(xs => [...xs, x]),
+    removeTodo: index => setTodos(xs => xs.filter((x, i) => i !== index)),
+  }
+}
+
+function App() {
   const {todos, addTodo, removeTodo} = useTodoState([])
 
   const saveTodo = todoText => {
