@@ -6,19 +6,17 @@ import '../css/styles.css'
 import TodoForm from './TodoForm'
 import TodoList from './TodoList'
 
+import useTodoState from './useTodoState'
+
 const App = () => {
-  const [todos, setTodos] = useState([])
+  const {todos, addTodo, removeTodo} = useTodoState([])
 
   const saveTodo = todoText => {
     const trimmedText = todoText.trim()
 
     if (trimmedText.length > 0) {
-      setTodos(xs => [...xs, trimmedText])
+      addTodo(trimmedText)
     }
-  }
-
-  const deleteTodo = index => {
-    setTodos(xs => xs.filter((x, i) => i != index))
   }
 
   return (
@@ -28,7 +26,7 @@ const App = () => {
       </Typography>
 
       <TodoForm saveTodo={saveTodo}/>
-      <TodoList todos={todos} deleteTodo={deleteTodo}/>
+      <TodoList todos={todos} deleteTodo={removeTodo}/>
     </div>
   )
 }
