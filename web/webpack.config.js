@@ -1,6 +1,7 @@
 const path = require('path')
 
 const reaxtJsRoot = 'reaxt-react-16'
+var ExtractTextPlugin = require("extract-text-webpack-plugin")
 
 const client_config = {
   entry: `${reaxtJsRoot}/client_entry_addition`,
@@ -9,14 +10,19 @@ const client_config = {
     filename: 'client.[hash].js', //dynamic name for long term caching, or code splitting, use WebPack.file_of(:main) to get it
     publicPath: '/public/'
   },
+  plugins: [
+    new ExtractTextPlugin({filename: "main.css", disable: false, allChunks: true}),
+  ],
   module: {
     loaders: [
+      {test: /css\/.+\.css$/, use:  ExtractTextPlugin.extract({fallback: "style-loader", use: "css-loader", publicPath: "/public/"})},
       {
-        test: /.js?$/,
+        test: /.+\.js$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
-          presets: ['babel-preset-es2015', 'babel-preset-react', 'babel-preset-stage-0'].map(require.resolve)
+          //presets: ['babel-preset-es2015', 'babel-preset-react', 'babel-preset-stage-0'].map(require.resolve)
+          presets: ['es2015', 'react', 'stage-0']
         }
       }
     ]

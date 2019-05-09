@@ -29,7 +29,7 @@ defmodule Hello.Api do
 
   get "*_" do
     data = %{path: conn.request_path, cookies: conn.cookies, query: conn.params, headers: conn.req_headers}
-    render = Reaxt.render!(:app, data, 30_000)
+    render = Reaxt.render!(:App, data, 30_000)
 
     conn
     |> put_resp_header("content-type", "text/html;charset=utf-8")
