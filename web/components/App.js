@@ -40,7 +40,7 @@ function App() {
   )
 }
 
-module.exports = {
+export default {
   reaxt_server_render(params, render) { // server side call, should call render(ReactComp)
     render(<App/>)
   },

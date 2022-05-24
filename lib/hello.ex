@@ -3,8 +3,16 @@ defmodule Hello.App do
 
   def start(_type, _args) do
     children = [
-      Plug.Adapters.Cowboy.child_spec(:http, Hello.Api, [], port: 8099),
+      {
+        Plug.Cowboy,
+        scheme: :http,
+        plug: Hello.Api,
+        options: [
+          port: 8099,
+        ]
+      }
     ]
+    _ = IO.puts("Starting server at http://localhost:8099")
 
     Reaxt.reload()
     Supervisor.start_link(children, [strategy: :one_for_one, name: __MODULE__])

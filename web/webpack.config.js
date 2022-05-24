@@ -1,41 +1,81 @@
 const path = require('path')
 
-const reaxtJsRoot = 'reaxt-react-16'
-var ExtractTextPlugin = require("extract-text-webpack-plugin")
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
 
 const client_config = {
-  entry: `${reaxtJsRoot}/client_entry_addition`,
+  entry: "reaxt/client_entry_addition",
+  mode: (process.env.MIX_ENV != 'prod') ? 'development' : 'production',
+  target: 'web',
+  // devtool: (process.env.MIX_ENV != 'prod') ? 'source-map' : false,
+  devtool: "inline-source-map",
   output: {
     path: path.join(__dirname, '../priv/static'), //typical output on the default directory served by Plug.Static
-    filename: 'client.[hash].js', //dynamic name for long term caching, or code splitting, use WebPack.file_of(:main) to get it
+    filename: '[name].[fullhash].js', // dynamic name for long term caching, or code splitting, use WebPack.file_of(:main) to get it
     publicPath: '/public/'
   },
+  // use cacheGroups to aggregate all css chunks into one main.css file
+  optimization: {
+    splitChunks: {cacheGroups: {styles: {name: 'styles', test: /\.css$/, chunks: 'all', enforce: true}}},
+    minimizer: (process.env.MIX_ENV != 'prod') ? [`...`] : [`...`, new CssMinimizerPlugin()],
+  },
   plugins: [
-    new ExtractTextPlugin({filename: "main.css", disable: false, allChunks: true}),
+    new MiniCssExtractPlugin({insert: "", filename: 'css/[name].css'}),
   ],
   module: {
-    loaders: [
-      {test: /css\/.+\.css$/, use:  ExtractTextPlugin.extract({fallback: "style-loader", use: "css-loader", publicPath: "/public/"})},
+    rules: [
       {
         test: /.+\.js$/,
-        loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
-          //presets: ['babel-preset-es2015', 'babel-preset-react', 'babel-preset-stage-0'].map(require.resolve)
-          presets: ['es2015', 'react', 'stage-0']
-        }
-      }
-    ]
+        use: {
+          loader: 'babel-loader',
+          options: {
+            cacheDirectory: true,
+            presets: [
+              ['@babel/preset-env', {targets: 'defaults'}],
+              '@babel/preset-react',
+            ],
+            sourceType: 'unambiguous',
+          },
+        },
+      },
+    ],
   }
 }
 
 const server_config = Object.assign(Object.assign({},client_config),{
   target: "node",
-  entry: `${reaxtJsRoot}/react_server`,
+  entry: "reaxt/react_server",
   externals: {},
   output: {
-    path: path.join(__dirname, '../priv/react_servers'), //typical output on the default directory served by Plug.Static
-    filename: 'server.js' //dynamic name for long term caching, or code splitting, use WebPack.file_of(:main) to get it
+    // typical output on the default directory served by Plug.Static
+    path: path.join(__dirname, '../priv/react_servers'),
+    filename: 'server.js',
+    chunkFilename: 'chunk/server.[id].js',
   },
 })
+
+// optimisation : ONLY EMIT files for client compilation, all file-loader should not emit files on server compilation
+server_config.module = {
+  rules: server_config.module.rules.map(rule => {
+    return {
+      ...rule,
+      use: ((Array.isArray(rule.use)) ? rule.use : [rule.use]).map(use => ({
+        ...use,
+        options: (use.loader === 'file-loader') ? {...use.options, emitFile: false} : use.options,
+      }))
+    }
+  }),
+}
+
+// css management : MiniCssExtractPlugin on client build but ignore on server side
+
+client_config.module.rules.push(
+  {test: /\.css$/, use: [{loader: MiniCssExtractPlugin.loader}, {loader: 'css-loader'}]}
+)
+
+server_config.module.rules.push(
+  {test: /\.css$/, use: [{loader: 'null-loader'}]}
+)
+
 module.exports = [client_config,server_config]
